@@ -22,7 +22,7 @@ app.add_middleware(
 class User(BaseModel):
     id: str
     username: str
-    energy: int = 100
+    energy: int = 10
     multiplier: int = 1  # 1 or 16
     earned: int = 0
 
@@ -68,7 +68,7 @@ def me(u: User = Depends(current_user)): return MeOut(**u.model_dump())
 @app.post("/mine", response_model=MeOut)
 def mine(u: User = Depends(current_user)):
     if u.energy <= 0:
-        raise HTTPException(400, "no energy")
+        raise HTTPException(status_code=409, detail={"code": "NO_ENERGY"})
     u.energy -= 1
     u.earned += u.multiplier
     USERS[u.id] = u
