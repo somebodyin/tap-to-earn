@@ -6,7 +6,7 @@ import {
 	useGetMeQuery,
 	useMineMutation,
 	useToggleBoostMutation,
-} from "@/store/api/endpoints";
+} from "../store/api/endpoints";
 import { MdLeaderboard } from "react-icons/md";
 
 export default function Home() {
