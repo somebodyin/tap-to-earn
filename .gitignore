@@ -16,6 +16,7 @@
 **/coverage/
 **/.turbo/
 **/.vercel/
+**/package-lock.json
 
 # ==== Python / FastAPI (tap-api) ====
 **/__pycache__/
@@ -29,3 +30,4 @@
 **/*.egg-info/
 **/.venv/
 **/venv/
+
