@@ -17,7 +17,9 @@ def test_login_and_me():
     assert me["username"] == "user1"
 
 def test_mine_and_boost():
-    r = login("alice"); cookie = str(r.cookies.get("session"))
+    import random
+    username = f"{random.choice(['alice', 'bob', 'charlie'])}{random.randint(1, 99999)}"
+    r = login(username); cookie = str(r.cookies.get("session"))
     r1 = c.post("/mine", cookies={"session": cookie}).json()
     assert r1["earned"] == 1
     c.post("/boost/toggle", cookies={"session": cookie})
