@@ -22,7 +22,7 @@ jobs:
 
         env:
             ENV: test
-            DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/testdb
+            DATABASE_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/testdb
             SECRET_KEY: testsecret
 
         defaults:
