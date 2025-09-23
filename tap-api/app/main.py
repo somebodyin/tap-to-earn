@@ -1,10 +1,10 @@
-from fastapi import FastAPI, Depends, HTTPException, Response
+from fastapi import Cookie, FastAPI, Depends, HTTPException, Response
 import uuid
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.security import make_session_token, COOKIE_NAME
+from app.core.security import issue_session, COOKIE_NAME, revoke_session
 from app.schemas import LoginIn, MeOut
 from app import crud
 from app.deps import get_db, get_current_user_and_state
@@ -33,13 +33,26 @@ def login(body: LoginIn, response: Response, db: Session = Depends(get_db)):
         raise HTTPException(status_code=422, detail="username required")
     user = crud.get_user_by_username(db, username) or crud.create_user(db, username)
     st = crud.get_or_create_state(db, user.id)
-    token = make_session_token(user.id, ttl_days=30)
+
+    raw = issue_session(db, user.id, ttl_days=30)
+
     response.set_cookie(
-        COOKIE_NAME, token, httponly=True,
-        secure=(settings.ENV == "production"), samesite="lax",
-        max_age=60*60*24*30, path="/",
+        COOKIE_NAME, raw,
+        httponly=True,
+        secure=(settings.ENV == "production"),
+        samesite="lax",
+        max_age=60*60*24*30,
+        path="/",
     )
     return to_meout(user, st)
+
+@app.post("/session/logout")
+def logout(response: Response, session: str | None = Cookie(default=None), db: Session = Depends(get_db)):
+    if session:
+        revoke_session(db, session)
+
+    response.delete_cookie(COOKIE_NAME, path="/")
+    return {"ok": True}
 
 @app.get("/me", response_model=MeOut)
 def me(current=Depends(get_current_user_and_state)):

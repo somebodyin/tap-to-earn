@@ -1,34 +1,38 @@
-import hmac, hashlib, base64, json
+import base64, json
 from datetime import datetime, timedelta, timezone
 from app.core.config import settings
+import secrets, hashlib
+from datetime import datetime, timedelta, timezone
+from sqlalchemy.orm import Session
+from app.models import SessionToken
 
 COOKIE_NAME = "session"
 
-def _b64u(b: bytes) -> str:
-    return base64.urlsafe_b64encode(b).rstrip(b"=").decode("ascii")
+def _hash(raw: str) -> str:
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
-def _b64u_json(obj: dict) -> str:
-    return _b64u(json.dumps(obj, separators=(",", ":"), ensure_ascii=False).encode("utf-8"))
+def issue_session(db: Session, user_id: int, ttl_days: int = 30) -> str:
+    raw = secrets.token_urlsafe(32)
+    db.add(SessionToken(
+        token_hash=_hash(raw),
+        user_id=user_id,
+        expires_at=datetime.now(timezone.utc) + timedelta(days=ttl_days),
+    ))
+    db.commit()
+    return raw
 
-def _sign(msg: str) -> str:
-    sig = hmac.new(settings.SECRET_KEY.encode("utf-8"), msg.encode("utf-8"), hashlib.sha256).digest()
-    return _b64u(sig)
+def get_user_by_session(db: Session, raw: str):
+    h = _hash(raw)
+    s = (db.query(SessionToken)
+           .filter(SessionToken.token_hash == h,
+                   SessionToken.revoked_at.is_(None),
+                   SessionToken.expires_at > datetime.now(timezone.utc))
+           .first())
+    return s.user if s else None
 
-def make_session_token(user_id: int, ttl_days: int = 30) -> str:
-    header = {"alg": "HS256", "typ": "JWT-lite"}
-    payload = {"uid": user_id, "exp": int((datetime.now(timezone.utc) + timedelta(days=ttl_days)).timestamp())}
-    h = _b64u_json(header); p = _b64u_json(payload); s = _sign(f"{h}.{p}")
-    return f"{h}.{p}.{s}"
-
-def parse_session_token(token: str) -> int | None:
-    try:
-        h, p, s = token.split(".")
-        if _sign(f"{h}.{p}") != s:
-            return None
-        pad = "=" * (-len(p) % 4)
-        payload = json.loads(base64.urlsafe_b64decode((p + pad).encode("ascii")))
-        if int(payload.get("exp", 0)) < int(datetime.now(timezone.utc).timestamp()):
-            return None
-        return int(payload["uid"])
-    except Exception:
-        return None
+def revoke_session(db: Session, raw: str):
+    h = _hash(raw)
+    db.query(SessionToken)\
+      .filter(SessionToken.token_hash == h)\
+      .update({SessionToken.revoked_at: datetime.now(timezone.utc)})
+    db.commit()
