@@ -1,10 +1,10 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useLoginUserMutation } from "../../store/api/endpoints";
+import { useLoginMutation } from "../../store/api/endpoints";
 
 export default function page() {
-	const [login, { isLoading }] = useLoginUserMutation();
+	const [login, { isLoading }] = useLoginMutation();
 	const [u, setU] = useState("");
 	const [err, setErr] = useState("");
 	const r = useRouter();
