@@ -24,7 +24,7 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children }) => {
 			/>
 			{/* Modal Card */}
 			<motion.div
-				className="fixed inset-0 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-[#161616] rounded-xl shadow-lg w-[600px] h-[400px] pt-4 px-6 pb-16"
+				className="fixed inset-0 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-[#161616] rounded-xl shadow-lg w-[calc(100%-32px)]  sm:w-[600px]  h-[400px] pt-4 px-6 pb-16"
 				initial={{ opacity: 0, scale: 0.75 }}
 				animate={{ opacity: 1, scale: 1 }}
 				exit={{ opacity: 0, scale: 0.75 }}
