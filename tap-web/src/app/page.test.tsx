@@ -4,6 +4,7 @@ import React from "react";
 import Page from "./page";
 import { apiSlice } from "../store/api-slice";
 import { ReduxProvider } from "../context/redux-provider";
+import { ModalProvider } from "../context/modal-provider";
 
 vi.mock("next/navigation", () => ({
 	useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
@@ -75,7 +76,9 @@ afterEach(() => {
 it("renders and mines", async () => {
 	render(
 		<ReduxProvider>
-			<Page />
+			<ModalProvider>
+				<Page />
+			</ModalProvider>
 		</ReduxProvider>
 	);
 
