@@ -36,11 +36,15 @@ def login(body: LoginIn, response: Response, db: Session = Depends(get_db)):
 
     raw = issue_session(db, user.id, ttl_days=30)
 
+    IS_PROD = settings.ENV == "production"
+    COOKIE_SAMESITE = "none" if IS_PROD else "lax"
+    COOKIE_SECURE   = True if IS_PROD else False
+    
     response.set_cookie(
         COOKIE_NAME, raw,
         httponly=True,
-        secure=(settings.ENV == "production"),
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
         max_age=60*60*24*30,
         path="/",
     )
